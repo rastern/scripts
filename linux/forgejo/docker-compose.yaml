@@ -1,0 +1,46 @@
+networks:
+  forgejo:
+    external: false
+
+services:
+  database:
+    image: postgres:17
+    container_name: forgejo-database
+    restart: always
+    environment:
+      - POSTGRES_DB=${DATABASE}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+    volumes:
+      # replace the left-hand side from the ':' with your own path
+      - /data/forgejo/database:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-d", "${DATABASE}", "-U", "${DB_USER}" ]
+      interval: 10s
+      retries: 3
+      start_period: 1s
+  
+  server:
+    image: codeberg.org/forgejo/forgejo:17
+    container_name: forgejo
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - TZ=America/New_York
+      - FORGEJO__database__DB_TYPE=postgres
+      - FORGEJO__database__HOST=database:5432
+      - FORGEJO__database__NAME=${DATABASE}
+      - FORGEJO__database__USER=${DB_USER}
+      - FORGEJO__database__PASSWD=${DB_PASS}
+    restart: always
+    networks:
+      - forgejo
+    volumes:
+      - /data/forgejo/data:/data
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 3000:3000
+      - 222:22
+    depends_on:
+      database:
+        condition: service_healthy
