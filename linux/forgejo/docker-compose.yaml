@@ -1,5 +1,6 @@
 networks:
   forgejo:
+    name: ${DOCKER_NETWORK}
     external: false
 
 services:
@@ -7,6 +8,8 @@ services:
     image: postgres:17
     container_name: forgejo-database
     restart: always
+    networks:
+      - ${DOCKER_NETWORK}
     environment:
       - POSTGRES_DB=${DATABASE}
       - POSTGRES_USER=${DB_USER}
@@ -34,7 +37,7 @@ services:
       - FORGEJO__database__PASSWD=${DB_PASS}
     restart: always
     networks:
-      - forgejo
+      - ${DOCKER_NETWORK}
     volumes:
       - /data/forgejo/data:/data
       - /etc/localtime:/etc/localtime:ro
